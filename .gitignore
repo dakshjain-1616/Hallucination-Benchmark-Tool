@@ -1,0 +1,50 @@
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environment
+venv/
+env/
+.venv/
+.env/
+
+# Output & results
+output/
+results/
+*.csv
+*.parquet
+intermediate_results.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+*.log
+logs/
+
+# Data (keep sample, ignore user datasets)
+data/*.json
+data/*.jsonl
+data/*.csv
+data/*.parquet
+!data/sample.json

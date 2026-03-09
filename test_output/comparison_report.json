@@ -1,0 +1,39 @@
+{
+  "timestamp": "2026-03-09T10:14:01.475043",
+  "model_count": 2,
+  "model_rankings": [
+    {
+      "model_name": "google/gemini-2.0-flash-001",
+      "avg_faithfulness": 0.8214,
+      "avg_factual_consistency": 0.6667,
+      "avg_hallucination_rate": 0.3333,
+      "avg_bleu_score": 0.4852,
+      "hallucination_percentage": 0.0,
+      "total_samples": 3,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "total_cost": 0,
+      "request_count": 0
+    },
+    {
+      "model_name": "anthropic/claude-3.5-sonnet",
+      "avg_faithfulness": 0.8214,
+      "avg_factual_consistency": 0.6667,
+      "avg_hallucination_rate": 0.3333,
+      "avg_bleu_score": 0.4852,
+      "hallucination_percentage": 0.0,
+      "total_samples": 3,
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "total_cost": 0,
+      "request_count": 0
+    }
+  ],
+  "side_by_side": []
+}

@@ -1,0 +1,106 @@
+{
+  "report_id": "report_20260309_101401",
+  "timestamp": "2026-03-09T10:14:01.473429",
+  "model_name": "unknown",
+  "dataset_name": "sample_benchmark",
+  "sample_results": [
+    {
+      "sample_id": "sample_1",
+      "question": "What is the capital of France?",
+      "response": "Paris is the capital of France.",
+      "ground_truth": "The capital of France is Paris.",
+      "faithfulness": 1.0,
+      "factual_consistency": 1.0,
+      "hallucination_rate": 0.0,
+      "bleu_score": 0.5623,
+      "claim_count": 1,
+      "citation_count": 0,
+      "llm_judge_score": null,
+      "llm_judge_reasoning": null,
+      "hallucination_detected": false,
+      "hallucination_category": null
+    },
+    {
+      "sample_id": "sample_2",
+      "question": "Who wrote 'Romeo and Juliet'?",
+      "response": "William Shakespeare wrote Romeo and Juliet in 1597.",
+      "ground_truth": "William Shakespeare wrote 'Romeo and Juliet'.",
+      "faithfulness": 0.75,
+      "factual_consistency": 1.0,
+      "hallucination_rate": 0.0,
+      "bleu_score": 0.6804,
+      "claim_count": 1,
+      "citation_count": 0,
+      "llm_judge_score": null,
+      "llm_judge_reasoning": null,
+      "hallucination_detected": false,
+      "hallucination_category": null
+    },
+    {
+      "sample_id": "sample_3",
+      "question": "What is the speed of light?",
+      "response": "The speed of light is 300,000 km/s.",
+      "ground_truth": "The speed of light in vacuum is approximately 299,792,458 meters per second.",
+      "faithfulness": 0.7143,
+      "factual_consistency": 0.0,
+      "hallucination_rate": 1.0,
+      "bleu_score": 0.2128,
+      "claim_count": 1,
+      "citation_count": 0,
+      "llm_judge_score": null,
+      "llm_judge_reasoning": null,
+      "hallucination_detected": false,
+      "hallucination_category": null
+    }
+  ],
+  "aggregate_stats": {
+    "total_samples": 3,
+    "avg_faithfulness": 0.8214,
+    "avg_factual_consistency": 0.6667,
+    "avg_hallucination_rate": 0.3333,
+    "avg_bleu_score": 0.4852,
+    "hallucination_detected_count": 0,
+    "hallucination_percentage": 0.0,
+    "avg_claims_per_response": 1.0,
+    "avg_citations_per_response": 0.0,
+    "category_distribution": {}
+  },
+  "config": {
+    "total_samples": 3,
+    "successful_samples": 3,
+    "failed_samples": 0,
+    "usage_stats": {}
+  },
+  "examples": {
+    "hallucinated": [],
+    "factual_error": [],
+    "fabricated_citation": [],
+    "unsupported_claim": [],
+    "correct": [
+      {
+        "sample_id": "sample_1",
+        "question": "What is the capital of France?",
+        "response": "Paris is the capital of France.",
+        "ground_truth": "The capital of France is Paris.",
+        "score": null,
+        "reasoning": null
+      },
+      {
+        "sample_id": "sample_2",
+        "question": "Who wrote 'Romeo and Juliet'?",
+        "response": "William Shakespeare wrote Romeo and Juliet in 1597.",
+        "ground_truth": "William Shakespeare wrote 'Romeo and Juliet'.",
+        "score": null,
+        "reasoning": null
+      },
+      {
+        "sample_id": "sample_3",
+        "question": "What is the speed of light?",
+        "response": "The speed of light is 300,000 km/s.",
+        "ground_truth": "The speed of light in vacuum is approximately 299,792,458 meters per second.",
+        "score": null,
+        "reasoning": null
+      }
+    ]
+  }
+}

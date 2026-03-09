@@ -1,0 +1,32 @@
+{
+  "name": "sample_benchmark",
+  "metadata": {
+    "description": "Sample dataset for testing"
+  },
+  "samples": [
+    {
+      "id": "sample_1",
+      "question": "What is the capital of France?",
+      "ground_truth": "The capital of France is Paris.",
+      "metadata": {
+        "category": "geography"
+      }
+    },
+    {
+      "id": "sample_2",
+      "question": "Who wrote 'Romeo and Juliet'?",
+      "ground_truth": "William Shakespeare wrote 'Romeo and Juliet'.",
+      "metadata": {
+        "category": "literature"
+      }
+    },
+    {
+      "id": "sample_3",
+      "question": "What is the speed of light?",
+      "ground_truth": "The speed of light in vacuum is approximately 299,792,458 meters per second.",
+      "metadata": {
+        "category": "physics"
+      }
+    }
+  ]
+}
