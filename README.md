@@ -1,5 +1,7 @@
 # Hallucination Benchmark Tool
 
+[![Powered by](https://img.shields.io/badge/made%20by-NEO-black)](https://heyneo.so/)
+
 > **Built autonomously by [NEO](https://heyneo.so/) — Your Autonomous AI Agent.**
 
 A production-ready tool for evaluating Large Language Model (LLM) responses for factual accuracy, fabricated citations, and unsupported claims.
