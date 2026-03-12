@@ -152,6 +152,18 @@ class DatasetLoader:
         
         return BenchmarkDataset(samples=samples, name="benchmark")
     
+    def load_from_dict(self, data: Dict[str, Any]) -> BenchmarkDataset:
+        """
+        Load a dataset from a dictionary (for in-memory datasets).
+        
+        Args:
+            data: Dictionary containing dataset with 'samples', 'name', 'metadata'
+            
+        Returns:
+            BenchmarkDataset object
+        """
+        return self._parse_data(data)
+    
     def create_sample_dataset(self, filepath: str, format: str = 'json') -> str:
         """
         Create a sample dataset for testing.

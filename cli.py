@@ -3,8 +3,17 @@
 Command Line Interface for Hallucination Benchmark Tool.
 
 Usage:
-    python cli.py --dataset path/to/dataset.json --model openrouter/google/gemini-3-flash-preview
-    python cli.py --dataset path/to/dataset.json --mock-mode
+    # Standard benchmark with existing dataset
+    python cli.py --dataset path/to/dataset.json --model google/gemini-2.0-flash-001
+    
+    # Dynamic generation + benchmark in one command
+    python cli.py --topic "friendliness" --dynamic --model google/gemini-3-flash-preview
+    python cli.py --topic "mathematics" --dynamic --model openai/gpt-5.4 --num-entries 10
+    
+    # Mock mode for testing
+    python cli.py --dataset data/benchmark.json --mock-mode
+    
+    # Create sample dataset
     python cli.py --create-sample --output path/to/sample.json
 """
 
@@ -12,6 +21,7 @@ import argparse
 import os
 import sys
 import json
+import tempfile
 from typing import Optional, List, Dict, Any
 
 from data.dataset_loader import DatasetLoader
@@ -27,7 +37,11 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run benchmark with OpenRouter model
+  # Dynamic generation + benchmark (no pre-existing dataset needed)
+  python cli.py --topic "friendliness" --dynamic --model google/gemini-3-flash-preview
+  python cli.py --topic "mathematics" --dynamic --model openai/gpt-5.4 --num-entries 10
+
+  # Run benchmark with existing dataset
   python cli.py --dataset data/benchmark.json --model google/gemini-3-flash-preview
 
   # Run in mock mode (no API calls)
@@ -36,16 +50,33 @@ Examples:
   # Create sample dataset
   python cli.py --create-sample --output data/sample.json
 
-  # Specify output directory
-  python cli.py --dataset data/benchmark.json --output-dir results/
+  # Multi-model comparison
+  python cli.py --dataset data/benchmark.json --model model1 model2 model3
         """
     )
     
-    # Required arguments
-    parser.add_argument(
+    # Dataset configuration
+    dataset_group = parser.add_argument_group('Dataset Configuration')
+    dataset_group.add_argument(
         '--dataset',
         type=str,
         help='Path to benchmark dataset (JSON, JSONL, CSV, or Parquet)'
+    )
+    dataset_group.add_argument(
+        '--topic',
+        type=str,
+        help='Topic for dataset generation (e.g., geography, maths reasoning, friendliness, technical depth)'
+    )
+    dataset_group.add_argument(
+        '--dynamic',
+        action='store_true',
+        help='Enable dynamic mode: generate dataset using 3-LLM consensus and immediately run benchmark'
+    )
+    dataset_group.add_argument(
+        '--num-entries',
+        type=int,
+        default=5,
+        help='Number of entries to generate with multi-source consensus (default: 5)'
     )
     
     # Model configuration
@@ -55,7 +86,7 @@ Examples:
         type=str,
         nargs='+',
         default=['google/gemini-3-flash-preview'],
-        help='Model identifier(s) for OpenRouter. Can specify multiple for comparison (default: google/gemini-3-flash-preview)'
+        help='Target model(s) to evaluate. Can specify multiple for comparison (default: google/gemini-3-flash-preview)'
     )
     model_group.add_argument(
         '--mock-mode',
@@ -85,8 +116,8 @@ Examples:
     eval_group.add_argument(
         '--judge-model',
         type=str,
-        default='anthropic/claude-opus-4-6',
-        help='Model for LLM-as-Judge (default: anthropic/claude-opus-4-6)'
+        default='anthropic/claude-sonnet-4-6',
+        help='Model for LLM-as-Judge (default: anthropic/claude-sonnet-4-6)'
     )
     
     # Output configuration
@@ -101,6 +132,11 @@ Examples:
         '--no-intermediate',
         action='store_true',
         help='Disable intermediate result saving'
+    )
+    output_group.add_argument(
+        '--save-dataset',
+        type=str,
+        help='Save dynamically generated dataset to this path (optional)'
     )
     
     # Utility commands
@@ -142,6 +178,16 @@ def validate_args(args: argparse.Namespace) -> bool:
             return False
         return True
     
+    # Dynamic mode validation
+    if args.dynamic:
+        if not args.topic:
+            print("Error: --topic required when using --dynamic mode")
+            print("Example: python cli.py --topic 'friendliness' --dynamic --model google/gemini-2.0-flash-001")
+            return False
+        # In dynamic mode, dataset is generated, not required
+        return True
+    
+    # Standard mode - dataset required
     # Auto-create data directory if it doesn't exist
     data_dir = "./data"
     if not os.path.exists(data_dir):
@@ -194,32 +240,111 @@ def validate_args(args: argparse.Namespace) -> bool:
 
 def create_sample_dataset(args: argparse.Namespace):
     """Create a sample dataset."""
-    loader = DatasetLoader()
-    filepath = loader.create_sample_dataset(args.output, args.format)
-    print(f"Sample dataset created: {filepath}")
     
-    # Display sample content
-    with open(filepath, 'r') as f:
-        if args.format == 'json':
-            data = json.load(f)
-            print(f"\nDataset contains {len(data.get('samples', []))} samples")
-        else:
-            content = f.read()
-            lines = content.strip().split('\n')
-            print(f"\nDataset contains {len(lines)} samples")
+    # Check if topic-based multi-source generation is requested
+    if args.topic:
+        print(f"Creating dataset with multi-source consensus for topic: '{args.topic}'")
+        
+        # Import here to avoid circular dependencies
+        from data.multi_source_generator import MultiSourceGenerator
+        
+        # Initialize generator
+        api_key = args.api_key or os.getenv('OPENROUTER_API_KEY')
+        if not api_key:
+            print("Error: OpenRouter API key required for multi-source generation")
+            sys.exit(1)
+        
+        generator = MultiSourceGenerator(api_key=api_key)
+        
+        # Generate dataset
+        output_path = args.output
+        num_entries = args.num_entries if hasattr(args, 'num_entries') else 5
+        
+        dataset = generator.generate_dataset(
+            topic=args.topic,
+            num_entries=num_entries,
+            output_path=output_path
+        )
+        
+        print(f"\nDataset created: {output_path}")
+        print(f"Total samples: {len(dataset.get('samples', []))}")
+        
+    else:
+        # Use legacy static sample generation
+        loader = DatasetLoader()
+        filepath = loader.create_sample_dataset(args.output, args.format)
+        print(f"Sample dataset created: {filepath}")
+        
+        # Display sample content
+        with open(filepath, 'r') as f:
+            if args.format == 'json':
+                data = json.load(f)
+                print(f"\nDataset contains {len(data.get('samples', []))} samples")
+            else:
+                content = f.read()
+                lines = content.strip().split('\n')
+                print(f"\nDataset contains {len(lines)} samples")
 
 
-def run_benchmark(args: argparse.Namespace):
+def generate_dynamic_dataset(args: argparse.Namespace) -> Dict[str, Any]:
+    """
+    Generate dataset dynamically using multi-source consensus.
+    
+    Returns:
+        Dictionary containing the generated dataset
+    """
+    from data.multi_source_generator import MultiSourceGenerator
+    
+    print("=" * 60)
+    print("Dynamic Dataset Generation - 3-LLM Consensus")
+    print("=" * 60)
+    print(f"\nTopic/Parameter: '{args.topic}'")
+    print(f"Number of entries: {args.num_entries}")
+    print("\nUsing 3 distinct LLM providers to reduce bias:")
+    print("  • OpenAI GPT-5.4")
+    print("  • Anthropic Claude Sonnet 4.6")
+    print("  • Google Gemini 3 Pro Preview")
+    print("-" * 60)
+    
+    api_key = args.api_key or os.getenv('OPENROUTER_API_KEY')
+    generator = MultiSourceGenerator(api_key=api_key)
+    
+    # Generate dataset in memory
+    dataset = generator.generate_dataset(
+        topic=args.topic,
+        num_entries=args.num_entries,
+        output_path=None  # Don't save to file yet
+    )
+    
+    # Optionally save the generated dataset
+    if args.save_dataset:
+        os.makedirs(os.path.dirname(args.save_dataset) or '.', exist_ok=True)
+        with open(args.save_dataset, 'w', encoding='utf-8') as f:
+            json.dump(dataset, f, indent=2)
+        print(f"\n✓ Generated dataset saved to: {args.save_dataset}")
+    
+    return dataset
+
+
+def run_benchmark(args: argparse.Namespace, dataset: Optional[Dict[str, Any]] = None):
     """Run the benchmark."""
     print("=" * 60)
     print("Hallucination Benchmark Tool")
     print("=" * 60)
     
     # Load dataset
-    print(f"\nLoading dataset: {args.dataset}")
-    loader = DatasetLoader()
-    dataset = loader.load(args.dataset)
-    print(f"Loaded {len(dataset)} samples")
+    if dataset is not None:
+        # Use dynamically generated dataset
+        print(f"\nUsing dynamically generated dataset: '{dataset.get('name', 'unknown')}'")
+        loader = DatasetLoader()
+        benchmark_dataset = loader.load_from_dict(dataset)
+        print(f"Loaded {len(benchmark_dataset)} samples")
+    else:
+        # Load from file
+        print(f"\nLoading dataset: {args.dataset}")
+        loader = DatasetLoader()
+        benchmark_dataset = loader.load(args.dataset)
+        print(f"Loaded {len(benchmark_dataset)} samples")
     
     # Handle multiple models for comparison
     models = args.model if isinstance(args.model, list) else [args.model]
@@ -278,7 +403,7 @@ def run_benchmark(args: argparse.Namespace):
         print("=" * 60)
         
         report = runner.run(
-            dataset=dataset,
+            dataset=benchmark_dataset,
             save_intermediate=not args.no_intermediate
         )
         
@@ -360,13 +485,41 @@ def main():
     try:
         if args.create_sample:
             create_sample_dataset(args)
+        elif args.dynamic:
+            # Dynamic mode: generate dataset then run benchmark
+            print("\n" + "=" * 60)
+            print("DYNAMIC BENCHMARK MODE")
+            print("=" * 60)
+            print("This mode will:")
+            print("  1. Generate a dataset using 3-LLM consensus (bias-free)")
+            print("  2. Immediately run benchmark on the target model")
+            print("  3. Compare target responses against consensus ground truth")
+            print("=" * 60 + "\n")
+            
+            # Step 1: Generate dataset
+            dataset = generate_dynamic_dataset(args)
+            
+            # Step 2: Run benchmark with generated dataset
+            run_benchmark(args, dataset=dataset)
+            
+            print("\n" + "=" * 60)
+            print("Dynamic Benchmark Complete!")
+            print("=" * 60)
+            print(f"\nTopic evaluated: '{args.topic}'")
+            print(f"Target model(s): {', '.join(args.model if isinstance(args.model, list) else [args.model])}")
+            print(f"Results saved to: {args.output_dir}")
+            
         else:
+            # Standard mode: run benchmark with existing dataset
             run_benchmark(args)
+            
     except KeyboardInterrupt:
         print("\n\nBenchmark interrupted by user")
         sys.exit(130)
     except Exception as e:
         print(f"\nError: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 
